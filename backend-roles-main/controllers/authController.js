@@ -1,55 +1,102 @@
-import Auth from '../models/authModel.js'; 
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+// import Auth from '../models/authModel.js'; 
+// import jwt from 'jsonwebtoken';
+// import bcrypt from 'bcryptjs';
+
+// export const signup = async (req, res) => {
+//   const { firstname, lastname, email, password, role } = req.body;
+//   console.log("email received", email);
+//   console.log(req.body);
+
+//   try {
+//     // Check if email already exists
+//     const existingAuth = await Auth.findOne({ email });
+//     if (existingAuth) {
+//       return res.status(400).json({ message: 'User already exists' });
+//     }
+
+//     // Restrict admin role: Only one admin allowed
+//     if (role === 'admin') {
+//       const existingAdmin = await Auth.findOne({ role: 'admin' });
+//       if (existingAdmin) {
+//         return res.status(403).json({ message: 'Admin already exists. Cannot create another admin.' });
+//       }
+//     }
+
+//     // Hash password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     // Create user with provided role, default to 'user' if not specified
+//     const newAuth = new Auth({
+//       firstname,
+//       lastname,
+//       email,
+//       password: hashedPassword,
+//       role: role || 'user', // If no role is provided, default to 'user'
+//     });
+
+//     await newAuth.save();
+
+//     // Generate JWT token
+
+
+//     res.status(201).json({
+//       message: 'User registered successfully',
+
+//       user: { id: newAuth._id, email: newAuth.email, role: newAuth.role },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Error registering user', error });
+//   }
+// };
+import Auth from "../models/authModel.js";
+import User from "../models/userModel.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const signup = async (req, res) => {
-  const { firstname, lastname, email, password, role } = req.body;
-  console.log("email received", email);
-  console.log(req.body);
-
   try {
-    // Check if email already exists
+    
+    const { 
+      firstname, lastname, email, password, role, 
+      cellphone1,cellphone2,homenumber, address, city, state, jobTitle, 
+      paymentMethod, dateOfBirth, dateOfJoining, languages 
+    } = req.body;
+    // ✅ Ensure required fields are provided
+    if (!firstname || !lastname || !email || !password || !role) {
+      return res.status(400).json({ message: "All required fields must be filled." });
+    }
+
+    // ✅ Check if user already exists
     const existingAuth = await Auth.findOne({ email });
     if (existingAuth) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: "User already exists." });
     }
-
-    // Restrict admin role: Only one admin allowed
-    if (role === 'admin') {
-      const existingAdmin = await Auth.findOne({ role: 'admin' });
-      if (existingAdmin) {
-        return res.status(403).json({ message: 'Admin already exists. Cannot create another admin.' });
-      }
-    }
-
-    // Hash password
+// Restrict admin role: Only one admin allowed
+   if (role === 'admin') {
+       const existingAdmin = await Auth.findOne({ role: 'admin' });
+       if (existingAdmin) {
+         return res.status(403).json({ message: 'Admin already exists. Cannot create another admin.' });
+       }
+     }
+    // ✅ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with provided role, default to 'user' if not specified
-    const newAuth = new Auth({
-      firstname,
-      lastname,
-      email,
-      password: hashedPassword,
-      role: role || 'user', // If no role is provided, default to 'user'
-    });
+    // ✅ Create and save Auth record
+    const newAuth = new Auth({ email, password: hashedPassword, role });
+    const savedAuth = await newAuth.save();
 
-    await newAuth.save();
+    // ✅ Create and save User record linked to Auth
+    const newUser = new User({ firstname, lastname, email,cellphone1,cellphone2,homenumber,address,city,state,jobTitle,paymentMethod,dateOfBirth,dateOfJoining,languages, authId: savedAuth._id });
+    const savedUser = await newUser.save();
 
-    // Generate JWT token
-    const token = jwt.sign({ userId: newAuth._id, role: newAuth.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(201).json({ message: "User registered successfully!", auth: savedAuth, user: savedUser });
 
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: { id: newAuth._id, email: newAuth.email, role: newAuth.role },
-    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error registering user', error });
+    console.error("Signup error:", error);
+    res.status(500).json({ message: "Error signing up user.", error });
   }
 };
-
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
