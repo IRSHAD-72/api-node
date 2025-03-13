@@ -2,69 +2,58 @@
 import User from '../models/userModel.js';
 import mongoose from 'mongoose';  
 
-// export const createUser= async (req, res) => {
-//  try {
-//        console.log("Recevived Data",req.body);
-//     const newUser = new User({
-//        fristname: req.body.name,
-//         lastname: req.body.lastname,
-//        cellphone1: req.body.cellphone1,
-//        cellphone2: req.body.cellphone2,
-//        homenumber: req.body.homenumber,
-//        address: req.body.address,
-//        city: req.body.city,
-//        state: req.body.state,
-//        emailid: req.body.emailid,
-//        jobTitle: req.body.jobTitle,
-//        paymentMethod: req.body.paymentMethod,
-//        dateOfBirth: req.body.dateOfBirth,
-//        dateOfJoining: req.body.dateOfJoining,
-//        languages: req.body.languages,
-//        ofPaidVacationDaysAllowed: req.body.ofPaidVacationDaysAllowed,
-//        ofPaidSickVacationAllowed: req.body.ofPaidSickVacationAllowed,
-//        employeeStatus: req.body.employeeStatus
-//      });
+export const createUser= async (req, res) => {
+ try {
+       console.log("Recevived Data",req.body);
+    const newUser = new User({
+        _id: new mongoose.Types.ObjectId(),     
+        firstname: req.body.firstname,
+        lastname: req.body.lastname,
+        email: req.body.email,
+        cellphone1: req.body.cellphone1,
+        cellphone2: req.body.cellphone2,
+        homenumber: req.body.homenumber,
+        address: req.body.address,
+        city: req.body.city,
+        state: req.body.state,
+        jobTitle: req.body.jobTitle,
+        paymentMethod: req.body.paymentMethod,
+        dateOfBirth: req.body.dateOfBirth,
+        dateOfJoining: req.body.dateOfJoining,
+        languages: req.body.languages,
+        authId: req.body.authId
+    
+  
+     });
 
     
-//      const savedUser = await newUser.save();
-//      res.status(201).json({ message: "User added successfully!", user: savedUser });
+     const savedUser = await newUser.save();
+     res.status(201).json({ message: "User added successfully!", user: savedUser });
 
-//    } catch (error) {
-//      console.error(error);
-//      res.status(500).json({ message: "Error saving user data", error });
-//    }
-// };
-
-
+   } catch (error) {
+     console.error(error);
+     res.status(500).json({ message: "Error saving user data", error });
+   }
+};
 
 
-export const getUserByAuthId = async (req, res) => {
+
+
+
+export const getUserData = async (req, res) => {
   try {
-    console.log("Request Params:", req.params); // 🔍 Debug Request Params
-    const { authId } = req.params;
-
-    if (!authId) {
-      return res.status(400).json({ message: "authId is missing in the request URL." });
-    }
-
-    // ✅ Check if authId is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(authId)) {
-      return res.status(400).json({ message: "Invalid authId format." });
-    }
-
-    // ✅ Find user by authId
-    const user = await User.findOne({ authId }).populate("authId");
-
-    console.log("User found:", user); // 🔍 Debug User Data
-
+    // Find the user by authId (from the authenticated user)
+    const user = await User.findOne({ authId: req.user._id }).populate('authId', 'email role');
+      console.log("User found:", user);   
+      
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: 'User not found.' });
     }
 
-    res.status(200).json(user);
+    res.status(200).json({ message: 'User data retrieved successfully', user });
   } catch (error) {
-    console.error("Error fetching user:", error);
-    res.status(500).json({ message: "Error fetching user details.", error });
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ message: 'Error fetching user data.', error });
   }
 };
  export const getAllUsers = async (req, res) => {

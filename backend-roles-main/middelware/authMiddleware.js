@@ -54,9 +54,17 @@ export const isUser = (req, res, next) => {
   }
   return res.status(403).json({ message: 'Access denied. Users only.' });
 };
+
 export const isAuthorizedUser = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user._id.toString() === req.params.id)) {
-      return next();
+  console.log('req.user:', req.user); // Debug log to check if req.user is populated
+  
+  if (!req.user) {
+    return res.status(401).json({ message: "User not authenticated." });
   }
+console.log('req.params.id:', req.params.authId,  req.user._id.toString()); // Debug log to check req.params.id
+  if (req.user.role === 'admin' || req.user._id.toString() === req.params.authId) {
+    return next();
+  }
+
   return res.status(403).json({ message: "Access denied. You can only access your own data." });
 };

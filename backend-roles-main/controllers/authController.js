@@ -62,12 +62,12 @@ export const signup = async (req, res) => {
       cellphone1,cellphone2,homenumber, address, city, state, jobTitle, 
       paymentMethod, dateOfBirth, dateOfJoining, languages 
     } = req.body;
-    // ✅ Ensure required fields are provided
+    // Ensure required fields are provided
     if (!firstname || !lastname || !email || !password || !role) {
       return res.status(400).json({ message: "All required fields must be filled." });
     }
 
-    // ✅ Check if user already exists
+    // Check if user already exists
     const existingAuth = await Auth.findOne({ email });
     if (existingAuth) {
       return res.status(400).json({ message: "User already exists." });
@@ -79,14 +79,14 @@ export const signup = async (req, res) => {
          return res.status(403).json({ message: 'Admin already exists. Cannot create another admin.' });
        }
      }
-    // ✅ Hash password
+    //  Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Create and save Auth record
+    // Create and save Auth record
     const newAuth = new Auth({ email, password: hashedPassword, role });
     const savedAuth = await newAuth.save();
 
-    // ✅ Create and save User record linked to Auth
+    //  Create and save User record linked to Auth
     const newUser = new User({ firstname, lastname, email,cellphone1,cellphone2,homenumber,address,city,state,jobTitle,paymentMethod,dateOfBirth,dateOfJoining,languages, authId: savedAuth._id });
     const savedUser = await newUser.save();
 
